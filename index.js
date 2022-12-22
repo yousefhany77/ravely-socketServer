@@ -16,10 +16,21 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("🚀⚡ Socket connected video v2 =>" + socket.id);
-  socket.on("join", (room, callback) => {
-    socket.join(room);
-    callback("joined room =>" + room);
+
+  socket.on("join-room", (roomId, UserId, callback) => {
+    socket.join(roomId);
+    console.log("✅ Socket joined room " + roomId, UserId);
+
+    // manage audio chat between users
+    socket.to(roomId).emit("user-connected", UserId);
+    callback(`✅ ${UserId} joined room ${roomId}`);
+
+    socket.on("disconnect", () => {
+      console.log("❌ Socket disconnected" + socket.id);
+      socket.to(roomId).emit("user-disconnected", UserId);
+    });
   });
+  // syncronize video between users
   socket.on("video_event", (user, timeline, eventType, room) => {
     socket.to(room).emit("video_event", user, timeline, eventType);
     console.log("video_event", user, timeline, eventType);
